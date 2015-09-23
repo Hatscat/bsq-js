@@ -1,0 +1,112 @@
+<input id="c" type="number" placeholder="columns nb"><input id="r" type="number" placeholder="rows nb"><input id="d" type="number" placeholder="density">
+<button onclick="p.innerHTML=validMap(+c.value||rnd1max(128),+r.value||rnd1max(64),+d.value||rnd1max(8))">new map</button>
+<button onclick="p.innerHTML=bsq(p.innerHTML.split('\n').map(e=>e.split('')))">bsq</button>
+<pre id="p" style="color:#0f0;background:#000"></pre>
+<script>
+
+/* --- informations du plateau --- */
+var empty_char = '.';
+var block_char = 'o';
+var filled_char = '#';
+/* ------------------------------- */
+
+/* --- fonctions à ne pas tenir compte --- */
+rnd1max=m=>1+Math.random()*m|0
+validMap=(x,y,d)=>{for(S='',I=y;I--;S+=I?'\n':'')for(J=x;J--;)S+=rnd1max(y)*2<d?block_char:empty_char;return S}
+/* --------------------------------------- */
+
+
+/*
+ _     _                                     _   _            _ _ _      _   _ 
+| |   (_)                                   | | (_)          | ( |_)    (_) | |
+| |    _ _ __ ___    __ _   _ __   __ _ _ __| |_ _ _ __    __| |/ _  ___ _  | |
+| |   | | '__/ _ \  / _` | | '_ \ / _` | '__| __| | '__|  / _` | | |/ __| | | |
+| |___| | | |  __/ | (_| | | |_) | (_| | |  | |_| | |    | (_| | | | (__| | |_|
+\_____/_|_|  \___|  \__,_| | .__/ \__,_|_|   \__|_|_|     \__,_| |_|\___|_| (_)
+                           | |                                                 
+                           |_|                                                 
+*/
+
+/* --- retourne la valeur minimale entre 3 valeurs --- */
+function min3 (a, b, c) // : int
+{
+	if (a < b)
+		if (a < c)
+			return a;
+		else
+			return b < c ? b : c;
+	else if (b < c)
+		return b;
+
+	return a < c ? a : c;
+}
+
+function error () // : string
+{
+	return "map error\n";
+}
+
+/* --- l'algo --- */
+function bsq (map) // : string
+{
+	var output = [];
+	var bigger_size = 0; // taille du plus grand carré trouvé
+	var bigger_y = 0; // coordonnées du plus grand carré trouvé
+	var bigger_x = 0;
+	var row_len = 0; // pour gerrer l'erreur des lignes de longueurs différentes
+
+	// gestion de l'erreur "il n'y a même pas une ligne d'un character"
+	if (!map[0][0])
+		return error();
+
+	// étape 1: copie de la map dans output + assignation de valeur + sauvegarde des coordonnées du + grand carré trouvé
+	var y = -1;
+	while (map[++y])
+	{
+		var x = -1;
+		
+		output[y] = [];
+		while (map[y][++x])
+		{
+			output[y][x] = map[y][x]; // copie propre pour la sortie
+			if (map[y][x] == block_char)
+				map[y][x] = 0;
+			else if (map[y][x] == empty_char)
+			{
+				if (!y || !x) // si c'est le bord de la map
+					map[y][x] = 1;
+				else
+					map[y][x] = 1 + min3(parseInt(map[y-1][x]), parseInt(map[y][x-1]), parseInt(map[y-1][x-1]));
+			}
+			else // gestion de l'erreur "il y a des charaters non prévus"
+				return error();
+
+			if (map[y][x] > bigger_size)
+			{
+				bigger_size = map[y][x];
+				bigger_y = y;
+				bigger_x = x;
+			}
+		}
+		output[y][x+1] = '\n';
+		
+		if (!y) // première ligne
+			row_len = x;
+		else if (x != row_len)
+			return error();
+	}
+
+	// étape 2: dessiner le carré
+	var size_y = bigger_size;
+	while (size_y--)
+	{
+		var size_x = bigger_size;
+
+		while (size_x--)
+			output[bigger_y - size_y][bigger_x - size_x] = filled_char;
+	}
+
+	return output.map(e=>e.join('')).join(''); // méthode javascript pour convertir un array d'arrays en string
+}
+
+</script>
